@@ -210,8 +210,9 @@ document.addEventListener('click',closeFloaters);
 function openTempPop(cell, day, isEdit, defStaff){
   closeFloaters();
   const cur = M_TEMP_OPEN[day];
-  // 기본 담당자: 배열(전체 등)이면 그대로, 숫자면 단일, 없으면 0
-  const initStaff = Array.isArray(defStaff) ? [...defStaff] : [defStaff??0];
+  // 기본 담당자: 지정 없으면 전체, 배열이면 그대로, 숫자면 단일(직원 헤더 진입)
+  const initStaff = defStaff==null ? M_STAFF.map((_,i)=>i)
+                  : Array.isArray(defStaff) ? [...defStaff] : [defStaff];
   mDraft = isEdit
     ? {day, s:cur.s, e:cur.e, staff:[...cur.staff]}
     : {day, s:'10:00', e:'18:00', staff:initStaff};

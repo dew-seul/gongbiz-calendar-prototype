@@ -468,7 +468,8 @@ dayMask.addEventListener('click',e=>{ if(e.target===dayMask)dayMask.classList.re
 
 function openTemp(day, isEdit, col, defStaff){
   const cur=TEMP_OPEN[day];
-  const init = Array.isArray(defStaff)?[...defStaff]:[defStaff??0]; // 직원 헤더 진입 시 기본 담당자
+  const init = defStaff==null ? STAFF.map((_,i)=>i) // 지정 없으면 전체 기본
+             : Array.isArray(defStaff)?[...defStaff]:[defStaff]; // 직원 헤더 진입 시 그 직원
   draft = isEdit&&cur ? {day,s:cur.s,e:cur.e,staff:[...cur.staff]} : {day,s:'10:00',e:'18:00',staff:init};
   draft.col = (col==null)? day%7 : col;
   panelOpen=false;
