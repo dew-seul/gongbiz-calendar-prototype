@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>공비서 · 모바일 캘린더</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+:root{
+  --primary:#227EFF; --primary-100:#ECF3FF; --primary-150:#BDD8FF; --naver:#03CF5D;
+  --red:#F03E3E; --g900:#20232B; --g700:#3A3F4B; --g500:#6B7280; --g400:#8A929E;
+  --g300:#B4B9C0; --g200:#DFE0E1; --g100:#EFF0F0; --g50:#F6F7F8; --border:#EAEBED;
+  --hatch:repeating-linear-gradient(45deg,#F2F3F5 0,#F2F3F5 6px,#F8F9FA 6px,#F8F9FA 12px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:Pretendard,sans-serif;background:#3a3d44;color:var(--g900);display:flex;justify-content:center;padding:20px}
+button{font-family:inherit;border:none;background:none;cursor:pointer}
+.phone{position:relative;width:390px;height:844px;background:#fff;border-radius:44px;overflow:hidden;
+  box-shadow:0 18px 60px rgba(0,0,0,.4);display:flex;flex-direction:column}
+/* 상태바 */
+.statusbar{height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font-size:15px;font-weight:600}
+.statusbar .sb-r{display:flex;gap:6px;align-items:center;font-size:13px}
+/* 헤더 */
+.mhead{display:flex;align-items:center;justify-content:space-between;padding:6px 18px 10px}
+.mhead .mh-month{display:flex;align-items:center;gap:6px;font-size:19px;font-weight:700}
+.mhead .mh-month .cv{font-size:12px;color:var(--g400)}
+.mhead .mh-icons{display:flex;gap:16px;font-size:18px;color:var(--g700)}
+.mhead .mh-icons .bell{position:relative}
+.mhead .mh-icons .bell .dot{position:absolute;top:-4px;right:-6px;background:var(--red);color:#fff;font-size:9px;
+  font-weight:700;border-radius:9px;padding:1px 4px;min-width:15px;text-align:center}
+/* 뷰 토글(프로토타입 네비) */
+.vtabs{display:flex;gap:4px;padding:2px 16px 8px}
+.vtabs button{flex:1;height:32px;border-radius:8px;font-size:13px;font-weight:600;color:var(--g500);background:var(--g50)}
+.vtabs button.on{background:var(--g900);color:#fff}
+/* 요일 스트립 */
+.wstrip{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;padding:6px 4px;border-bottom:1px solid var(--border)}
+.wstrip.with-gut{grid-template-columns:48px repeat(7,1fr)} /* 주/일: 좌측 시간거터 정렬 */
+.wstrip .wd{font-size:12px;color:var(--g500);padding:4px 0}
+.wstrip .wd .dn{display:block;margin-top:3px;font-size:14px;color:var(--g700);font-weight:600;
+  width:30px;height:30px;line-height:30px;border-radius:50%;margin-inline:auto}
+.wstrip .wd.sun,.wstrip .wd.sun .dn{color:var(--red)}
+.wstrip .wd.sel .dn{background:var(--g900);color:#fff}
+.wstrip .wd.soft .dn{background:var(--primary-100);color:var(--primary)}
+.wstrip .wd.tappable{cursor:pointer}
+.wstrip .wd.menu-open .dn{box-shadow:0 0 0 1.5px var(--primary);color:var(--primary);background:#fff}
+.strip-menu{position:absolute;z-index:15;background:#fff;border:1px solid var(--border);border-radius:14px;
+  box-shadow:0 8px 28px rgba(0,0,0,.18);padding:6px;min-width:208px}
+.strip-menu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:14px;
+  font-size:15px;color:var(--g900);font-weight:500;border-radius:8px;background:#fff}
+.strip-menu button:not(:last-child){border-bottom:1px solid var(--g100)}
+.strip-menu button.hl{color:var(--primary)}
+.strip-menu .ic{width:18px;text-align:center}
+/* 본문 영역 */
+.body{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.scroll{flex:1;overflow-y:auto}
+.view{display:none}.view.on{display:block}
+/* ===== 월 ===== */
+.mgrid{display:grid;grid-template-columns:repeat(7,1fr)}
+.mcell{min-height:96px;border-top:1px solid var(--border);border-left:1px solid var(--border);padding:5px 4px;position:relative}
+.mcell:nth-child(7n+1){border-left:none}
+.mcell .d{font-size:12px;color:var(--g700);text-align:center}
+.mcell.other .d{color:var(--g300)}
+.mcell.sun .d{color:var(--red)}
+.mcell.today .d{background:var(--g900);color:#fff;border-radius:50%;width:20px;height:20px;line-height:20px;margin:0 auto}
+.mcell.off{background:var(--hatch)}
+.mcell.off .off-l{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:10px;color:var(--g400)}
+.mcell.openday{background:var(--primary-100)}
+.ev-bar{margin-top:2px;font-size:10px;color:var(--g700);background:var(--g100);border-left:2px solid var(--primary);
+  border-radius:2px;padding:1px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-bar.gray{border-left-color:var(--g300)}
+.t-badge{margin-top:2px;font-size:9px;font-weight:700;color:#fff;background:var(--primary);border-radius:4px;padding:1px 4px;display:inline-block}
+/* ===== 타임그리드(주/일) ===== */
+.tg{display:flex;position:relative}
+.tg-gut{width:48px;flex:none}
+.tg-gut .h{height:64px;font-size:11px;color:var(--g400);padding:2px 6px;text-align:right}
+.tg-cols{flex:1;display:grid;position:relative}
+.tg-col{position:relative;border-left:1px solid var(--g100)}
+.tg-col .h{height:64px;border-top:1px solid var(--g100)}
+.tg-col.off{background:var(--hatch)}
+.tg-col.openday{background:var(--primary-100)}
+.now-line{position:absolute;left:0;right:0;height:0;border-top:1.5px solid var(--primary);z-index:3}
+.now-line::before{content:"";position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--primary)}
+.ev-card{position:absolute;border-radius:8px;padding:6px 8px;font-size:11px;overflow:hidden;z-index:2}
+.ev-card.blue{background:#DCEAFF;border:1px solid var(--primary-150)}
+.ev-card .nm{font-weight:700;font-size:12px;display:flex;align-items:center;gap:4px}
+.ev-card .wl{width:14px;height:14px;border-radius:50%;background:var(--primary);color:#fff;font-size:9px;display:inline-flex;align-items:center;justify-content:center}
+.ev-card .nv{position:absolute;right:6px;bottom:6px;width:16px;height:16px;border-radius:50%;background:var(--naver);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+/* 일 직원 헤더 */
+.day-staff{display:grid;grid-template-columns:48px 1fr 1fr;border-bottom:1px solid var(--border);text-align:center}
+.day-staff .st{font-size:12px;color:var(--g700);font-weight:600;padding:6px 0;display:flex;align-items:center;justify-content:center;gap:4px}
+.day-staff .st .dot{width:7px;height:7px;border-radius:2px}
+.day-staff .st.tappable{cursor:pointer;border-radius:8px;margin:2px}
+.day-staff .st.menu-open{box-shadow:inset 0 0 0 1.5px var(--primary);color:var(--primary)}
+/* ===== 리스트 ===== */
+.lwrap{padding:12px}
+.lcard{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.04);margin-bottom:10px}
+.lcard .r1{display:flex;justify-content:space-between;align-items:center}
+.lcard .tm{font-size:14px;font-weight:700}
+.lcard .stt{font-size:12px;font-weight:600;color:var(--g700);display:flex;align-items:center;gap:5px}
+.lcard .nbg{width:16px;height:16px;border-radius:50%;background:var(--naver);color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.lcard .r2{display:flex;justify-content:space-between;margin-top:8px;font-size:13px;color:var(--g700)}
+.lcard .r3{display:flex;justify-content:space-between;margin-top:5px;font-size:12px;color:var(--g500)}
+.lcard .memo{color:var(--g400)}
+.list-temp-row{display:flex;align-items:center;justify-content:center;gap:6px;margin:4px 0 14px;
+  color:var(--primary);font-size:13px;font-weight:600;border:1px solid var(--primary-150);border-radius:10px;padding:11px;background:#fff}
+/* Today pill */
+.today-pill{position:absolute;bottom:100px;left:50%;transform:translateX(-50%);background:var(--g900);color:#fff;
+  font-size:13px;font-weight:600;padding:9px 20px;border-radius:20px;z-index:5}
+/* FAB */
+.fab{position:absolute;right:18px;bottom:100px;width:56px;height:56px;border-radius:50%;background:var(--primary);
+  color:#fff;font-size:28px;display:flex;align-items:center;justify-content:center;z-index:6;box-shadow:0 6px 18px rgba(34,126,255,.4)}
+/* 탭바 */
+.tabbar{flex:none;height:84px;background:#fff;border-top:1px solid var(--border);
+  display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:18px;z-index:7}
+.tabbar .tab{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--g400);padding-top:8px}
+.tabbar .tab.on{color:var(--primary)}
+.tabbar .tab .ic{font-size:20px}
+/* ===== 딤 + 바텀시트/액션시트 ===== */
+.mask{position:absolute;inset:0;background:rgba(20,22,28,.5);z-index:20;display:none;align-items:flex-end}
+.mask.open{display:flex}
+.mask.center{align-items:center;justify-content:center}
+/* iOS 액션시트(＋FAB) */
+.sheet{width:100%;padding:8px;animation:up .2s}
+@keyframes up{from{transform:translateY(30px)}to{transform:translateY(0)}}
+.sheet-card{background:#fff;border-radius:16px;overflow:hidden;margin-bottom:8px}
+.sheet-card button{width:100%;padding:18px;font-size:16px;color:var(--g900);background:#fff}
+.sheet-card button:not(:last-child){border-bottom:1px solid var(--g100)}
+.sheet-card button.hl{color:var(--primary);font-weight:600}
+.sheet-cancel{width:100%;padding:18px;font-size:16px;font-weight:700;color:var(--g900);background:#fff;border-radius:16px}
+/* 임시영업 바텀시트 */
+.bsheet{width:100%;background:#fff;border-radius:20px 20px 0 0;padding:8px 20px 28px;animation:up .25s;max-height:90%;overflow-y:auto}
+.bsheet .grip{width:40px;height:4px;background:var(--g200);border-radius:2px;margin:6px auto 14px}
+.bsheet .bs-title{font-size:18px;font-weight:700;margin-bottom:4px}
+.bsheet .bs-subdate{font-size:13px;color:var(--g500);font-weight:500;margin-bottom:2px}
+.bs-hint{font-size:11px;color:var(--g400);font-weight:400;margin-left:4px}
+.bs-datechips{display:flex;flex-wrap:wrap;gap:8px}
+.bs-dchip{border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--g700);background:#fff}
+.bs-dchip.on{border-color:var(--primary);background:var(--primary-100);color:var(--primary);font-weight:600}
+.bsheet .bs-subdate .tag{font-size:11px;font-weight:600;color:var(--g500);background:var(--g100);border-radius:5px;padding:2px 7px;margin-left:4px}
+.bsheet .bs-note{font-size:12px;color:var(--primary);background:var(--primary-100);border-radius:8px;padding:9px 11px;margin:12px 0;line-height:1.5}
+/* 일정 바텀시트(월 칸 탭) */
+.ds-head{display:flex;justify-content:space-between;align-items:center;margin:8px 0 14px}
+.ds-date{font-size:18px;font-weight:700}
+.ds-off{font-size:12px;color:var(--g500);background:var(--g100);padding:4px 9px;border-radius:6px}
+.ds-cnt{font-size:13px;color:var(--g500);font-weight:500}
+.ds-cta{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--primary-150);
+  color:var(--primary);background:var(--primary-100);border-radius:12px;padding:15px;font-size:15px;font-weight:600;margin-bottom:14px}
+.ds-temp{display:flex;justify-content:space-between;align-items:center;background:var(--primary-100);
+  border-radius:12px;padding:13px 14px;margin-bottom:14px;font-size:14px}
+.ds-temp-act{display:flex;gap:14px}
+.ds-temp-act button{color:var(--primary);font-size:14px;font-weight:600}
+.ds-empty{color:var(--g500);font-size:13px;line-height:1.6;padding:4px 2px 12px}
+.ds-card{border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:10px}
+.ds-card .r1{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:700}
+.ds-card .r1 .tag{font-size:12px;color:var(--g500);font-weight:500}
+.ds-card .r2{margin-top:7px;font-size:13px;color:var(--g700)}
+.bs-field{margin-bottom:16px}
+.bs-label{font-size:13px;font-weight:600;color:var(--g700);margin-bottom:8px}
+.bs-label .req{color:var(--red)}
+.bs-row{display:flex;gap:10px;align-items:center}
+.bs-sel{flex:1;height:46px;border:1px solid var(--border);border-radius:10px;padding:0 12px;font-size:14px;background:#fff;color:var(--g800)}
+.bs-date{width:100%;height:46px;border:1px solid var(--border);border-radius:10px;padding:0 12px;font-size:14px;
+  display:flex;align-items:center;justify-content:space-between;color:var(--g900);font-weight:500}
+.bs-date .tag{font-size:11px;font-weight:600;color:var(--g500);background:var(--g100);border-radius:5px;padding:2px 7px}
+/* 담당자 멀티셀렉트 */
+.bs-staff-trig{width:100%;height:46px;border:1px solid var(--border);border-radius:10px;padding:0 12px;
+  display:flex;align-items:center;justify-content:space-between;font-size:14px;color:var(--g900);font-weight:500;background:#fff}
+.bs-staff-trig.ph{color:var(--g400);font-weight:400}
+.bs-staff-panel{margin-top:8px;border:1px solid var(--border);border-radius:12px;padding:8px}
+.bs-search{width:100%;height:42px;border:1px solid var(--border);border-radius:10px;padding:0 12px;font-size:14px;margin-bottom:6px}
+.bs-list{max-height:200px;overflow-y:auto}
+.bs-row-item{display:flex;align-items:center;justify-content:space-between;width:100%;padding:11px 8px;border-radius:8px;font-size:14px;color:var(--g700)}
+.bs-row-item.all{font-weight:700;color:var(--g800);border-bottom:1px solid var(--border);border-radius:0;margin-bottom:4px}
+.bs-row-item .nl{display:flex;align-items:center;gap:8px}
+.bs-row-item .sd{width:9px;height:9px;border-radius:50%}
+.bs-row-item .ck{width:20px;height:20px;border:1.5px solid var(--g300);border-radius:6px;flex:none}
+.bs-row-item.on{color:var(--primary);font-weight:600}
+.bs-row-item.on .ck{border-color:var(--primary);background:var(--primary) center/13px no-repeat;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E")}
+.bs-submit{width:100%;height:52px;border-radius:12px;background:var(--primary);color:#fff;font-size:16px;font-weight:700;margin-top:8px}
+.toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%) translateY(10px);background:rgba(33,37,43,.94);
+  color:#fff;font-size:13px;padding:11px 18px;border-radius:10px;opacity:0;pointer-events:none;transition:.2s;z-index:30;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="statusbar"><span>9:41</span><span class="sb-r">📶 🔋100</span></div>
+  <div class="mhead">
+    <div class="mh-month" id="mhMonth">25년 12월 <span class="cv">▾</span></div>
+    <div class="mh-icons"><span>🎧</span><span class="bell">🔔<span class="dot">23</span></span><span>⚙️</span></div>
+  </div>
+  <div class="vtabs" id="vtabs">
+    <button data-v="month" class="on">월</button>
+    <button data-v="week">주</button>
+    <button data-v="day">일</button>
+    <button data-v="list">리스트</button>
+  </div>
+  <div class="wstrip" id="wstrip"></div>
+
+  <div class="body"><div class="scroll" id="scroll">
+    <!-- 월 -->
+    <section class="view on" id="v-month"><div class="mgrid" id="mgrid"></div></section>
+    <!-- 주 -->
+    <section class="view" id="v-week"><div class="tg"><div class="tg-gut" id="wGut"></div><div class="tg-cols" id="wCols" style="grid-template-columns:repeat(7,1fr)"></div></div></section>
+    <!-- 일 -->
+    <section class="view" id="v-day">
+      <div class="day-staff" id="dayStaffRow"></div>
+      <div class="tg"><div class="tg-gut" id="dGut"></div><div class="tg-cols" id="dCols"></div></div>
+    </section>
+    <!-- 리스트 -->
+    <section class="view" id="v-list"><div class="lwrap" id="lwrap"></div></section>
+  </div></div>
+
+  <div class="today-pill">Today</div>
+  <button class="fab" id="fab">＋</button>
+
+  <div class="tabbar">
+    <div class="tab on"><span class="ic">🕐</span>예약</div>
+    <div class="tab"><span class="ic">👤</span>고객</div>
+    <div class="tab"><span class="ic">📊</span>매출</div>
+    <div class="tab"><span class="ic">🛒</span>스토어</div>
+    <div class="tab"><span class="ic">☰</span>메뉴</div>
+  </div>
+
+  <!-- ＋ FAB 액션시트 -->
+  <div class="mask" id="fabMask">
+    <div class="sheet">
+      <div class="sheet-card">
+        <button data-act="book">예약 등록</button>
+        <button data-act="block">예약 막기</button>
+        <button data-act="detail">일정 상세 보기</button>
+      </div>
+      <button class="sheet-cancel" id="fabCancel">취소</button>
+    </div>
+  </div>
+
+  <!-- 월 칸 탭 → 그 날 일정 바텀시트(peek) -->
+  <div class="mask" id="dayMask">
+    <div class="bsheet" id="daySheet"></div>
+  </div>
+
+  <!-- 임시영업 설정 바텀시트 -->
+  <div class="mask" id="tempMask">
+    <div class="bsheet" id="bsheet"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ===== 데이터 ===== */
+const OFF_COL=4; // 목요일 정기휴무
+const TEMP_OPEN={}; // {일:{s,e,staff[]}}
+const PAL=['#227EFF','#9B7CFF','#1DC9B7','#FF6B6B','#FFB020','#2BB0ED','#E64980','#7048E8','#12B886','#FA5252'];
+const NAMES=['공대남','김직원이','박실장','이디자이너','최원장','정수석','강매니저','윤디자','임실장','한선생','오대리','서디자','신매니','권원장','황실장','안수석','송디자','전매니','홍선생','문대리'];
+const STAFF=NAMES.map((n,i)=>({n,c:PAL[i%PAL.length]}));
+const WD=['일','월','화','수','목','금','토'];
+const fmtKo=v=>{const[h,m]=v.split(':').map(Number);const ap=h<12?'오전':'오후';const hh=h<=12?h:h-12;return `${ap} ${hh}:${String(m).padStart(2,'0')}`;};
+const TIME_OPTS=(()=>{const a=[];for(let h=6;h<=22;h++)['00','30'].forEach(m=>a.push(`${String(h).padStart(2,'0')}:${m}`));return a;})();
+const dow=n=>(0+(n-1))%7; // 12월 1일=월? 데모용 단순: 1=월
+
+/* ===== 요일 스트립(주/일/리스트 선택일 표시) ===== */
+function renderStrip(view){
+  const strip=document.getElementById('wstrip');
+  const needGut=(view==='week'||view==='day'); // 타임그리드 좌측 거터에 맞춤
+  strip.className='wstrip'+(needGut?' with-gut':'');
+  if(view==='month'){ // 월 뷰: 요일만(날짜·선택 없음)
+    strip.innerHTML=WD.map((w,i)=>`<div class="wd${i===0?' sun':''}">${w}</div>`).join('');
+    return;
+  }
+  const DSET={week:[25,26,27,28,29,30,31], list:[25,26,27,28,29,30,31], day:[3,4,5,6,7,8,9]};
+  const days=DSET[view];
+  const sel={week:29,day:7,list:26}[view];
+  const soft={day:6}[view];
+  strip.innerHTML=(needGut?'<div></div>':'')+days.map((n,i)=>{
+    let c='wd'+(i===0?' sun':'')+(n===sel?' sel':'')+(n===soft?' soft':'')+(view==='week'?' tappable':'');
+    return `<div class="${c}" data-i="${i}" data-n="${n}">${WD[i]}<span class="dn">${n}</span></div>`;
+  }).join('');
+  if(view==='week') strip.querySelectorAll('.tappable').forEach(el=>
+    el.addEventListener('click',ev=>{ ev.stopPropagation(); openStripMenu(el,+el.dataset.n,+el.dataset.i); }));
+}
+
+/* 주 뷰 요일 탭 → 헤더 아래 드롭다운(데스크탑 주 뷰와 동일) */
+function openStripMenu(anchor, n, i){
+  closeStripMenu();
+  const temp=TEMP_OPEN[n], off=(i===OFF_COL)&&!temp;
+  const items=[{ic:'＋',t:'예약 등록',a:()=>toast('예약 등록 (프로토타입 범위 외)')}];
+  if(temp){ items.push({ic:'🟢',t:'임시 영업일 수정',hl:1,a:()=>openTemp(n,true,i)});
+            items.push({ic:'⊗',t:'임시 영업일 해제',a:()=>{delete TEMP_OPEN[n];renderAll();toast(`12월 ${n}일 임시 영업일을 해제했어요`);}}); }
+  else if(off){ items.push({ic:'🟢',t:'임시 영업일로 설정',hl:1,a:()=>openTemp(n,false,i)}); }
+  else { items.push({ic:'⊘',t:'예약 막기',a:()=>toast('예약 막기 (프로토타입 범위 외)')}); }
+  items.push({ic:'📅',t:'일정 상세보기',a:()=>toast('일정 상세 (프로토타입 범위 외)')});
+  anchor.classList.add('menu-open');
+  const m=document.createElement('div'); m.className='strip-menu'; m.id='stripMenu';
+  m.innerHTML=items.map((it,k)=>`<button data-k="${k}" class="${it.hl?'hl':''}"><span class="ic">${it.ic}</span>${it.t}</button>`).join('');
+  m.addEventListener('click',e=>e.stopPropagation());
+  document.querySelector('.phone').appendChild(m);
+  let left=anchor.offsetLeft+anchor.offsetWidth/2-m.offsetWidth/2;
+  left=Math.max(8,Math.min(left,390-m.offsetWidth-8));
+  m.style.left=left+'px'; m.style.top=(anchor.offsetTop+anchor.offsetHeight+4)+'px';
+  items.forEach((it,k)=>m.querySelector(`[data-k="${k}"]`).addEventListener('click',()=>{ closeStripMenu(); it.a(); }));
+}
+function closeStripMenu(){ const m=document.getElementById('stripMenu'); if(m)m.remove(); document.querySelectorAll('.menu-open').forEach(d=>d.classList.remove('menu-open')); }
+document.addEventListener('click',closeStripMenu);
+
+/* ===== 월 ===== */
+function renderMonth(){
+  const grid=document.getElementById('mgrid'); grid.innerHTML='';
+  const cells=[];
+  for(let d=26;d<=30;d++)cells.push({n:d,other:true}); // 11월 말 (월화수목금 → 시작 일=30? 데모)
+  cells.length=0;
+  // 12월: 1일=월. 앞 일요일 자리 11/30
+  cells.push({n:30,other:true});
+  for(let d=1;d<=31;d++)cells.push({n:d,other:false});
+  let nd=1; while(cells.length<42)cells.push({n:nd++,other:true});
+  cells.forEach((c,i)=>{
+    const col=i%7;
+    const el=document.createElement('div'); el.className='mcell';
+    if(c.other)el.classList.add('other'); if(col===0)el.classList.add('sun');
+    if(!c.other&&c.n===12)el.classList.add('today');
+    const temp=!c.other&&TEMP_OPEN[c.n];
+    const off=!c.other&&!temp&&col===OFF_COL;
+    let h=`<div class="d">${c.n}</div>`;
+    if(temp){ el.classList.add('openday'); h+=`<span class="t-badge">임시영업</span>`; el.dataset.temp=c.n; }
+    else if(off){ el.classList.add('off'); el.dataset.off=c.n; h+=`<div class="off-l">휴무일</div>`; }
+    else if(!c.other && [1,2,3,8,9].includes(c.n)){
+      h+=`<div class="ev-bar">홍길동</div>`; if(c.n<3)h+=`<div class="ev-bar gray">결혼식</div>`;
+    }
+    el.innerHTML=h;
+    if(!c.other) el.addEventListener('click',()=>openDayBottom(c.n, col)); // 칸 탭 → 일정 바텀시트
+    grid.appendChild(el);
+  });
+}
+
+/* ===== 타임그리드(주/일) ===== */
+const HOURS=[8,9,10,11,12,13,14,15];
+function buildGut(id){ document.getElementById(id).innerHTML=HOURS.map((h,i)=>`<div class="h">${i?fmtKo(h+':00').replace(':00',''):''}</div>`).join(''); }
+function buildCols(id,n,offCols){
+  const w=document.getElementById(id); w.innerHTML='';
+  for(let c=0;c<n;c++){
+    const col=document.createElement('div'); col.className='tg-col';
+    if(offCols&&offCols.includes(c))col.classList.add('off');
+    col.innerHTML=HOURS.map(()=>`<div class="h"></div>`).join('');
+    w.appendChild(col);
+  }
+  return [...w.children];
+}
+function evCard(col,{top,h,name,desc,time,naver}){
+  const d=document.createElement('div'); d.className='ev-card blue';
+  d.style.top=(top*64)+'px'; d.style.height=(h*64-6)+'px'; d.style.left='3px'; d.style.right='3px';
+  d.innerHTML=`<div class="nm"><span class="wl">W</span>${name}</div><div style="color:var(--g700);margin-top:2px">${desc}</div><div style="color:var(--g500);margin-top:3px">${time}</div>${naver?'<div class="nv">N</div>':''}`;
+  col.appendChild(d);
+}
+function renderWeek(){
+  buildGut('wGut');
+  const cols=buildCols('wCols',7,TEMP_OPEN[29]?[]:[OFF_COL]); // 목(인덱스4) 휴무
+  if(TEMP_OPEN[29])cols[OFF_COL].classList.add('openday');
+  evCard(cols[2],{top:4.8,h:1.6,name:'김고객',desc:'손>젤네일 여름한',time:'',naver:true});
+  // now line 12:48 → 12시 행(index4) + 0.8
+  const nl=document.createElement('div'); nl.className='now-line'; nl.style.top=(4.8*64)+'px';
+  document.getElementById('wCols').appendChild(nl);
+}
+// 일 뷰 기준일: 7일(목)=정기휴무 → 직원 헤더에서 임시영업 설정 시연
+const DAY_N_M=7, DAY_OFF_M=true;
+const DSTAFF=[{n:'담당자없음',c:'#B4B9C0'},{n:'공대남',c:'#227EFF'},{n:'김직원이',c:'#9B7CFF'}];
+function renderDay(){
+  const head=document.getElementById('dayStaffRow');
+  head.style.gridTemplateColumns=`48px repeat(${DSTAFF.length},1fr)`;
+  head.innerHTML='<div class="st"></div>'+DSTAFF.map(s=>`<div class="st tappable" data-n="${s.n}"><span class="dot" style="background:${s.c}"></span>${s.n}</div>`).join('');
+  head.querySelectorAll('.tappable').forEach(el=>el.addEventListener('click',ev=>{ ev.stopPropagation(); openStaffMenu(el, el.dataset.n); }));
+  buildGut('dGut');
+  document.getElementById('dCols').style.gridTemplateColumns=`repeat(${DSTAFF.length},1fr)`;
+  const offAll=(DAY_OFF_M && !TEMP_OPEN[DAY_N_M]) ? DSTAFF.map((_,i)=>i) : (TEMP_OPEN[DAY_N_M]?[]:null);
+  const cols=buildCols('dCols',DSTAFF.length, offAll);
+  if(TEMP_OPEN[DAY_N_M]) cols.forEach(c=>c.classList.add('openday'));
+  evCard(cols[1],{top:1,h:1.4,name:'김고객',desc:'손>젤네일 여름한정',time:'오전 9:00-10:00',naver:true});
+}
+
+/* 일 뷰 직원 헤더 탭 → 드롭다운(직원 액션 + 임시영업) */
+function openStaffMenu(anchor, name){
+  closeStripMenu();
+  const si=STAFF.findIndex(s=>s.n===name);
+  const preset=(name==='담당자없음'||si<0)?STAFF.map((_,i)=>i):si; // 담당자없음=전체
+  const items=[
+    {ic:'＋',t:'예약 등록',a:()=>toast(`${name} 예약 등록 (프로토타입 범위 외)`)},
+    {ic:'⊘',t:'예약 막기',a:()=>toast(`${name} 예약 막기 (프로토타입 범위 외)`)},
+    {ic:'👤',t:'스케줄 설정',a:()=>toast(`${name} 스케줄 설정 (프로토타입 범위 외)`)},
+  ];
+  if(DAY_OFF_M){
+    if(TEMP_OPEN[DAY_N_M]){ items.push({ic:'🟢',t:'임시 영업일 수정',hl:1,a:()=>openTemp(DAY_N_M,true,OFF_COL)});
+      items.push({ic:'⊗',t:'임시 영업일 해제',a:()=>{delete TEMP_OPEN[DAY_N_M];renderAll();toast(`12월 ${DAY_N_M}일 임시 영업일을 해제했어요`);}}); }
+    else items.push({ic:'🟢',t:'임시 영업일로 설정',hl:1,a:()=>openTemp(DAY_N_M,false,OFF_COL,preset)});
+  }
+  anchor.classList.add('menu-open');
+  const m=document.createElement('div'); m.className='strip-menu'; m.id='stripMenu';
+  m.innerHTML=items.map((it,k)=>`<button data-k="${k}" class="${it.hl?'hl':''}"><span class="ic">${it.ic}</span>${it.t}</button>`).join('');
+  m.addEventListener('click',e=>e.stopPropagation());
+  document.querySelector('.phone').appendChild(m);
+  let left=anchor.offsetLeft+anchor.offsetWidth/2-m.offsetWidth/2;
+  left=Math.max(8,Math.min(left,390-m.offsetWidth-8));
+  m.style.left=left+'px'; m.style.top=(anchor.offsetTop+anchor.offsetHeight+4)+'px';
+  items.forEach((it,k)=>m.querySelector(`[data-k="${k}"]`).addEventListener('click',()=>{ closeStripMenu(); it.a(); }));
+}
+
+/* ===== 리스트 ===== */
+function renderList(){
+  document.getElementById('lwrap').innerHTML=`
+    <div class="list-temp-row" id="listTempBtn"><span>＋</span> 임시 영업일 설정</div>
+    <div class="lcard">
+      <div class="r1"><span class="tm">오전 8:00 - 오전 9:00</span><span class="stt">예약 대기 <span class="nbg">N</span></span></div>
+      <div class="r2"><span>김수한무거북…</span><span>홍길동</span></div>
+      <div class="r3"><span>손 &gt; 젤제거</span><span class="memo">메모없음</span></div>
+    </div>`;
+  document.getElementById('listTempBtn').addEventListener('click',()=>openTemp(26,false,1)); // 26=월요일 데모 휴무
+}
+
+/* ===== 뷰 전환 ===== */
+function setView(v){
+  document.querySelectorAll('.vtabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id==='v-'+v));
+  document.getElementById('mhMonth').firstChild.textContent = (v==='day'?'25년 8월 ':'25년 12월 ');
+  renderStrip(v);
+  document.getElementById('scroll').scrollTop = (v==='week'||v==='day')?260:0;
+}
+document.getElementById('vtabs').addEventListener('click',e=>{ const b=e.target.closest('[data-v]'); if(b)setView(b.dataset.v); });
+
+/* ===== ＋ FAB 액션시트 ===== */
+const fabMask=document.getElementById('fabMask');
+document.getElementById('fab').addEventListener('click',()=>fabMask.classList.add('open'));
+document.getElementById('fabCancel').addEventListener('click',()=>fabMask.classList.remove('open'));
+fabMask.addEventListener('click',e=>{ if(e.target===fabMask)fabMask.classList.remove('open'); });
+fabMask.querySelectorAll('[data-act]').forEach(b=>b.addEventListener('click',()=>{
+  fabMask.classList.remove('open');
+  toast({book:'예약 등록 화면',block:'예약 막기',detail:'일정 상세 보기'}[b.dataset.act]+' (프로토타입 범위 외)');
+}));
+function nextOffDay(){ // 12월 다음 목요일(휴무) 데모
+  for(let d=12;d<=31;d++) if(dow(d)===OFF_COL && !TEMP_OPEN[d]) return d;
+  return 18;
+}
+
+/* ===== 임시영업 설정 바텀시트 ===== */
+const tempMask=document.getElementById('tempMask'), bsheet=document.getElementById('bsheet');
+const dayMask=document.getElementById('dayMask'), daySheet=document.getElementById('daySheet');
+let draft=null, panelOpen=false;
+
+/* 월 칸 탭 → 그 날 일정 바텀시트 (휴무면 임시영업 설정 CTA) */
+function openDayBottom(day, col){
+  const temp=TEMP_OPEN[day], off=(col===OFF_COL)&&!temp;
+  const head=`<div class="ds-head"><span class="ds-date">12. ${day} (${WD[col]})</span>`+
+    (off?`<span class="ds-off">휴무일</span>`:`<span class="ds-cnt">확정 3</span>`)+`</div>`;
+  let cta='';
+  if(temp) cta=`<div class="ds-temp"><div><b style="color:var(--primary)">임시영업</b> ${fmtKo(temp.s)} ~ ${fmtKo(temp.e)}</div>
+      <div class="ds-temp-act"><button data-edit>수정</button><button data-del>해제</button></div></div>`;
+  else if(off) cta=`<button class="ds-cta" data-set><span>＋</span> 임시 영업일 설정</button>`;
+  const list = (off&&!temp)
+    ? `<div class="ds-empty">휴무일이에요. 임시 영업일로 설정하면 이 날만 <b>네이버·공비서 온라인 예약</b>을 받을 수 있어요.</div>`
+    : `<div class="ds-card"><div class="r1"><span>오전 10:00 ~ 11:00</span><span class="tag">예약 확정</span></div><div class="r2">뿌기 · 리터치&gt;실크모</div></div>
+       <div class="ds-card"><div class="r1"><span>오전 11:30 ~ 12:00</span><span class="tag">예약 대기</span></div><div class="r2">김고객 · 손&gt;젤제거</div></div>`;
+  daySheet.innerHTML=`<div class="grip"></div>${head}${cta}${list}`;
+  const q=s=>daySheet.querySelector(s);
+  q('[data-set]')?.addEventListener('click',()=>{ dayMask.classList.remove('open'); openTemp(day,false,col); });
+  q('[data-edit]')?.addEventListener('click',()=>{ dayMask.classList.remove('open'); openTemp(day,true,col); });
+  q('[data-del]')?.addEventListener('click',()=>{ delete TEMP_OPEN[day]; renderAll(); dayMask.classList.remove('open'); toast(`12월 ${day}일 임시 영업일을 해제했어요`); });
+  dayMask.classList.add('open');
+}
+dayMask.addEventListener('click',e=>{ if(e.target===dayMask)dayMask.classList.remove('open'); });
+
+function openTemp(day, isEdit, col, defStaff){
+  const cur=TEMP_OPEN[day];
+  const init = Array.isArray(defStaff)?[...defStaff]:[defStaff??0]; // 직원 헤더 진입 시 기본 담당자
+  draft = isEdit&&cur ? {day,s:cur.s,e:cur.e,staff:[...cur.staff]} : {day,s:'10:00',e:'18:00',staff:init};
+  draft.col = (col==null)? day%7 : col;
+  panelOpen=false;
+  renderSheet(isEdit);
+  tempMask.classList.add('open');
+}
+tempMask.addEventListener('click',e=>{ if(e.target===tempMask)tempMask.classList.remove('open'); });
+
+function renderSheet(isEdit){
+  const day=draft.day, tag=draft.col===OFF_COL?'정기 휴무':'휴무일';
+  const timeSel=(id,val)=>`<select class="bs-sel" id="${id}">`+TIME_OPTS.map(v=>`<option value="${v}" ${v===val?'selected':''}>${fmtKo(v)}</option>`).join('')+`</select>`;
+  bsheet.innerHTML=`
+    <div class="grip"></div>
+    <div class="bs-title">임시 영업일 ${isEdit?'수정':'설정'}</div>
+    <div class="bs-subdate">2025. 12. ${day} (${WD[draft.col]}) <span class="tag">${tag}</span></div>
+    <div class="bs-note">이 날만 <b>네이버·공비서 온라인 예약</b>에 예약 가능으로 노출돼요.</div>
+    <div class="bs-field">
+      <div class="bs-label">영업시간 <span class="req">*</span></div>
+      <div class="bs-row">${timeSel('tS',draft.s)}<span>~</span>${timeSel('tE',draft.e)}</div>
+    </div>
+    <div class="bs-field">
+      <div class="bs-label">담당자 <span class="req">*</span></div>
+      <button class="bs-staff-trig ${draft.staff.length?'':'ph'}" id="staffTrig">${staffSummary()}<span>▾</span></button>
+      <div class="bs-staff-panel" id="staffPanel" ${panelOpen?'':'hidden'}>
+        <input class="bs-search" id="staffSearch" placeholder="담당자 이름 검색">
+        <div class="bs-list" id="staffList"></div>
+      </div>
+    </div>
+    <button class="bs-submit" id="tempSubmit">${isEdit?'수정 완료':'임시 영업일 등록'}</button>`;
+  bsheet.querySelector('#tS').addEventListener('change',e=>draft.s=e.target.value);
+  bsheet.querySelector('#tE').addEventListener('change',e=>draft.e=e.target.value);
+  const trig=bsheet.querySelector('#staffTrig'), panel=bsheet.querySelector('#staffPanel'), search=bsheet.querySelector('#staffSearch');
+  trig.addEventListener('click',()=>{ panelOpen=!panelOpen; panel.hidden=!panelOpen; if(panelOpen)search.focus(); });
+  search.addEventListener('input',renderStaffList);
+  bsheet.querySelector('#staffList').addEventListener('click',e=>{
+    if(e.target.closest('[data-all]')){ draft.staff = draft.staff.length===STAFF.length?[]:STAFF.map((_,i)=>i); renderStaffList(); syncTrig(); return; }
+    const r=e.target.closest('[data-i]'); if(!r)return;
+    const i=+r.dataset.i, at=draft.staff.indexOf(i);
+    if(at>-1)draft.staff.splice(at,1); else draft.staff.push(i);
+    renderStaffList(); syncTrig();
+  });
+  bsheet.querySelector('#tempSubmit').addEventListener('click',()=>{
+    if(draft.e<=draft.s){ toast('종료 시간은 시작 시간보다 늦어야 해요'); return; }
+    if(!draft.staff.length){ toast('담당자를 1명 이상 선택해 주세요'); return; }
+    TEMP_OPEN[draft.day]={s:draft.s,e:draft.e,staff:[...draft.staff]};
+    tempMask.classList.remove('open');
+    renderAll(); toast(`12월 ${draft.day}일 임시 영업일로 설정했어요`);
+  });
+  renderStaffList();
+}
+function staffSummary(){
+  const n=draft.staff.length;
+  if(!n)return '담당자 선택';
+  if(n===STAFF.length)return `전체 ${n}명`;
+  const f=STAFF[[...draft.staff].sort((a,b)=>a-b)[0]].n;
+  return n>1?`${f} 외 ${n-1}명`:f;
+}
+function syncTrig(){ const t=bsheet.querySelector('#staffTrig'); if(t){t.firstChild.textContent=staffSummary(); t.classList.toggle('ph',!draft.staff.length);} }
+function renderStaffList(){
+  const box=bsheet.querySelector('#staffList'); if(!box)return;
+  const f=(bsheet.querySelector('#staffSearch')?.value||'').trim();
+  const all=draft.staff.length===STAFF.length;
+  const list=STAFF.map((s,i)=>({s,i})).filter(o=>!f||o.s.n.includes(f));
+  let h=`<button class="bs-row-item all ${all?'on':''}" data-all><span class="nl">전체 ${STAFF.length}명</span><span class="ck"></span></button>`;
+  h+=list.map(({s,i})=>`<button class="bs-row-item ${draft.staff.includes(i)?'on':''}" data-i="${i}"><span class="nl"><span class="sd" style="background:${s.c}"></span>${s.n}</span><span class="ck"></span></button>`).join('') || `<div style="padding:14px;text-align:center;color:var(--g400);font-size:13px">검색 결과 없음</div>`;
+  box.innerHTML=h;
+}
+
+/* ===== toast ===== */
+let tT=null;
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); if(tT)clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('show'),2200); }
+
+/* ===== 렌더 ===== */
+function renderAll(){ renderMonth(); renderWeek(); renderDay(); renderList(); }
+renderStrip('month'); renderAll();
+
+/* 미리보기 해시: #fab=액션시트, #temp=설정 바텀시트, #week/#day/#list=뷰 */
+(function(){
+  const h=location.hash.slice(1);
+  if(['week','day','list','month'].includes(h)) setView(h);
+  else if(h==='fab') fabMask.classList.add('open');
+  else if(h==='temp') openTemp(nextOffDay(), false, OFF_COL);
+  else if(h.startsWith('wtap')){ setView('week'); const n=+(h.split('-')[1]||29);
+    setTimeout(()=>document.querySelector(`#wstrip .wd[data-n="${n}"]`)?.click(),0); }
+  else if(h.startsWith('dbot')){ const n=+(h.split('-')[1]||18); openDayBottom(n, n%7); }
+  else if(h.startsWith('tconf')){ const n=+(h.split('-')[1]||18); openTemp(n,false,n%7); } // 확정 진입(날짜 표시)
+  else if(h.startsWith('dstaff')){ setView('day'); const k=+(h.split('-')[1]||1);
+    setTimeout(()=>document.querySelectorAll('#dayStaffRow .st.tappable')[k]?.click(),0); }
+})();
+</script>
+</body>
+</html>

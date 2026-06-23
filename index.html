@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>공비서살롱 · 캘린더</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app">
+  <!-- ================= GNB ================= -->
+  <aside class="gnb">
+    <div class="gnb-top">
+      <div class="gnb-logo">공비서살롱</div>
+      <div class="gnb-shop">
+        <div class="gnb-shop-row"><span class="muted">점주</span><span>홍길동</span></div>
+        <div class="gnb-shop-row">
+          <span class="muted">잔여 알림</span>
+          <span class="gnb-charge-row">123,155<button class="gnb-charge">충전</button></span>
+        </div>
+      </div>
+      <nav class="gnb-nav">
+        <a class="gnb-item"><span class="gnb-ico">🏠</span><span>홈</span><span class="gnb-arrow">›</span></a>
+        <a class="gnb-item"><span class="gnb-ico">📊</span><span>매출</span><span class="gnb-arrow">›</span></a>
+        <a class="gnb-item"><span class="gnb-ico">🧑</span><span>고객</span><span class="gnb-arrow">›</span></a>
+        <a class="gnb-item"><span class="gnb-ico">📣</span><span>마케팅</span><span class="gnb-arrow">›</span></a>
+        <a class="gnb-item"><span class="gnb-ico">📈</span><span>통계</span><span class="gnb-arrow">›</span></a>
+        <a class="gnb-item"><span class="gnb-ico">🏡</span><span>우리샵 관리</span><span class="gnb-arrow">›</span></a>
+        <a class="gnb-item gnb-item--open"><span class="gnb-ico">📅</span><span>온라인 예약</span><span class="gnb-arrow">⌄</span></a>
+        <div class="gnb-sub">
+          <a class="gnb-subitem">공비서로 예약받기</a>
+          <a class="gnb-subitem gnb-subitem--active">네이버예약 연동</a>
+        </div>
+        <a class="gnb-item"><span class="gnb-ico">❓</span><span>고객센터</span><span class="gnb-arrow">›</span></a>
+      </nav>
+    </div>
+    <div class="gnb-promo">
+      <div class="gnb-promo-text">공비서 사전 입점 시<br/>입점비 무료!</div>
+      <div class="gnb-promo-badge">공비서</div>
+      <div class="gnb-promo-dots"><span class="on"></span><span></span></div>
+    </div>
+  </aside>
+
+  <!-- ================= RIGHT AREA ================= -->
+  <main class="right-area">
+    <!-- Top header -->
+    <header class="top-header">
+      <div class="th-left">
+        <span class="th-logo">공비서</span>
+        <span class="th-badge">원장님</span>
+      </div>
+      <div class="th-right">
+        <button class="th-store">공비서스토어</button>
+        <button class="th-link">이용권정보</button>
+        <button class="th-link">마이페이지</button>
+        <button class="th-icon">🪪</button>
+        <button class="th-icon th-bell">🔔<span class="dot"></span></button>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- Control bar -->
+      <div class="control-bar">
+        <div class="cb-left">
+          <button class="cb-select">전체<span class="caret">⌄</span></button>
+          <div class="cb-tabs">
+            <button class="cb-tab is-active" data-view="month">월</button>
+            <button class="cb-tab" data-view="week">주</button>
+            <button class="cb-tab" data-view="day">일</button>
+            <button class="cb-tab" data-view="list">리스트</button>
+          </div>
+          <button class="cb-setting" id="cbSetting">설정
+            <div class="set-dropdown" id="setDropdown">
+              <div class="sd-item" data-goto="business">
+                <svg class="sdi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.3V20h14V9.3"/></svg>
+                샵 영업 설정</div>
+              <div class="sd-item" data-goto="staff">
+                <svg class="sdi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20c0-3.3 2.9-6 6.5-6s6.5 2.7 6.5 6"/></svg>
+                근무 및 휴가</div>
+              <div class="sd-item" data-goto="display">
+                <svg class="sdi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.2h17"/><path d="M8 3v3.5"/><path d="M16 3v3.5"/></svg>
+                캘린더 표시</div>
+            </div>
+          </button>
+        </div>
+        <div class="cb-right">
+          <button class="cb-listbtn" title="리스트 보기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>
+          </button>
+          <div class="cb-search">
+            <span class="cb-search-ph">고객 이름, 연락처, 메모</span>
+            <span class="cb-search-ico">🔍</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ MONTH VIEW ============ -->
+      <section class="view view-month is-active" id="view-month">
+        <div class="card month-card">
+          <div class="month-head">
+            <button class="nav-arrow">‹</button>
+            <div class="month-title">2025. 11</div>
+            <button class="nav-arrow">›</button>
+            <button class="today-pill today-pill--ghost">Today</button>
+          </div>
+          <div class="month-weekdays" id="monthWeekdays"></div>
+          <div class="month-grid" id="monthGrid"></div>
+        </div>
+      </section>
+
+      <!-- ============ WEEK VIEW ============ -->
+      <section class="view view-week" id="view-week">
+        <div class="card timegrid-card">
+          <div class="tg-head">
+            <button class="nav-arrow">‹</button>
+            <div class="tg-title">25.11.16 - 25.11.22</div>
+            <button class="nav-arrow">›</button>
+            <button class="today-pill today-pill--ghost tg-today">Today</button>
+          </div>
+          <div class="tg-daycols" id="weekDayCols"></div>
+          <div class="tg-body">
+            <div class="tg-gutter" id="weekGutter"></div>
+            <div class="tg-columns" id="weekColumns"></div>
+          </div>
+        </div>
+        <aside class="mini-panel" id="weekMini"></aside>
+      </section>
+
+      <!-- ============ DAY VIEW ============ -->
+      <section class="view view-day" id="view-day">
+        <div class="card timegrid-card">
+          <div class="tg-head">
+            <button class="nav-arrow">‹</button>
+            <div class="tg-title">25. 11. 17 <span class="tg-dow">(월요일)</span> <span class="off-badge">정기 휴무</span></div>
+            <button class="nav-arrow">›</button>
+            <div class="tg-right">
+              <button class="lc-temp-btn" id="dayTempBtn"><span>＋</span> 임시 영업일 설정</button>
+              <button class="today-pill tg-today">Today</button>
+            </div>
+          </div>
+          <div class="day-staff" id="dayStaff"></div>
+          <div class="tg-body">
+            <div class="tg-gutter" id="dayGutter"></div>
+            <div class="tg-columns tg-columns--day" id="dayColumns"></div>
+          </div>
+        </div>
+        <aside class="mini-panel" id="dayMini"></aside>
+      </section>
+
+      <!-- ============ LIST VIEW ============ -->
+      <section class="view view-list" id="view-list">
+        <div class="card list-card">
+          <div class="lc-head">
+            <button class="nav-arrow">‹</button>
+            <div class="lc-title">25. 11. 17 <span class="lc-dow">(월요일)</span></div>
+            <button class="nav-arrow">›</button>
+            <div class="lc-right">
+              <button class="lc-temp-btn" id="lcTempBtn"><span>＋</span> 임시 영업일 설정</button>
+              <button class="today-pill today-pill--ghost lc-today">Today</button>
+            </div>
+          </div>
+          <div class="lc-rows" id="listRows"></div>
+        </div>
+        <aside class="mini-panel" id="listMini"></aside>
+      </section>
+    </div>
+
+    <!-- Floating buttons -->
+    <div class="fab-group">
+      <button class="fab-inquiry"><span>💬</span><span>1:1 문의</span></button>
+      <button class="fab-create">＋</button>
+    </div>
+
+    <!-- Naver toast -->
+    <div class="naver-toast">
+      <div class="nt-logo">N</div>
+      <div class="nt-body">
+        <div class="nt-title">네이버 예약 알림</div>
+        <div class="nt-desc">고객이 기다리고 있어요. 일정 확인 후 예약 상태를 선택해 주세요.</div>
+      </div>
+      <button class="nt-close">✕</button>
+    </div>
+  </main>
+</div>
+<!-- ================= 샵 운영 설정 모달 ================= -->
+<div class="shop-mask" id="shopMask">
+  <div class="shop-modal">
+    <div class="shop-modal-title">
+      <span class="smt-text">샵 운영 설정</span>
+      <button class="smt-close" id="shopClose">✕</button>
+    </div>
+    <div class="shop-modal-body">
+      <!-- 좌측 내비 -->
+      <nav class="smn">
+        <div class="smn-group">
+          <div class="smn-gtitle">샵 영업 설정</div>
+          <button class="smn-btn is-active" data-pane="hours">영업 요일·시간</button>
+          <button class="smn-btn" data-pane="holiday">휴무일</button>
+          <button class="smn-btn" data-pane="temp">임시 영업일<span class="new-dot"></span></button>
+        </div>
+        <div class="smn-group">
+          <div class="smn-gtitle">근무 및 휴가 <span class="tip">?</span></div>
+          <button class="smn-btn" data-pane="work">근무 요일·시간</button>
+          <button class="smn-btn" data-pane="vacation">휴가 일정</button>
+        </div>
+        <div class="smn-group">
+          <div class="smn-gtitle">캘린더 표시</div>
+          <button class="smn-btn" data-pane="view">캘린더 보기 옵션</button>
+          <button class="smn-btn" data-pane="color">직원 색상 구분</button>
+        </div>
+      </nav>
+      <!-- 우측 콘텐츠 -->
+      <div class="smc">
+        <div class="smc-pane is-active" data-pane="hours" id="paneHours"></div>
+        <div class="smc-pane" data-pane="temp" id="paneTemp"></div>
+        <div class="smc-pane" data-pane="holiday"><div class="pane-ph">휴무일 설정 (프로토타입 범위 외)</div></div>
+        <div class="smc-pane" data-pane="work"><div class="pane-ph">근무 요일·시간 (프로토타입 범위 외)</div></div>
+        <div class="smc-pane" data-pane="vacation"><div class="pane-ph">휴가 일정 (프로토타입 범위 외)</div></div>
+        <div class="smc-pane" data-pane="view"><div class="pane-ph">캘린더 보기 옵션 (프로토타입 범위 외)</div></div>
+        <div class="smc-pane" data-pane="color"><div class="pane-ph">직원 색상 구분 (프로토타입 범위 외)</div></div>
+      </div>
+    </div>
+    <div class="shop-foot"><button class="btn-save">저장</button></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script src="shop-setting.js"></script>
+</body>
+</html>
